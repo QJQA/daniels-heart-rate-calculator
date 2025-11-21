@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>丹尼尔斯跑步区间心率计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+        
+        .input-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .max-hr-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .toggle-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .toggle-btn:hover {
+            border-color: #667eea;
+        }
+        
+        .input-mode {
+            display: none;
+        }
+        
+        .input-mode.active {
+            display: block;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .calculate-btn {
+            background: #667eea;
+            color: white;
+        }
+        
+        .calculate-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .reset-btn {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .reset-btn:hover {
+            background: #d0d0d0;
+        }
+        
+        .result-section {
+            display: none;
+        }
+        
+        .result-section.active {
+            display: block;
+        }
+        
+        .stats-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            color: #667eea;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        thead {
+            background: #d4f94f;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #d4f94f;
+            font-size: 14px;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        tbody tr:nth-child(odd) {
+            background: #f8f9fa;
+        }
+        
+        tbody tr:hover {
+            background: #f0f0f0;
+        }
+        
+        .intensity-light {
+            background: #e8f5e9 !important;
+        }
+        
+        .intensity-moderate {
+            background: #fff3e0 !important;
+        }
+        
+        .intensity-threshold {
+            background: #ffe0b2 !important;
+        }
+        
+        .intensity-hard {
+            background: #ffccbc !important;
+        }
+        
+        .intensity-sprint {
+            background: #ffcdd2 !important;
+        }
+        
+        .hr-range {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error.active {
+            display: block;
+        }
+        
+        .note {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            color: #1565c0;
+            font-size: 12px;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+        
+        .source {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            text-align: center;
+            line-height: 16px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 5px;
+            position: relative;
+        }
+        
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 12px;
+            border-radius: 6px;
+            white-space: normal;
+            width: 200px;
+            font-size: 12px;
+            z-index: 1000;
+            font-weight: normal;
+            line-height: 1.4;
+            text-align: left;
+        }
+        
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+        
+        .info-icon:hover .tooltip {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>丹尼尔斯跑步区间心率计算器</h1>
+        
+        <div class="input-section">
+            <div class="toggle-group">
+                <button class="toggle-btn active" onclick="switchMode('known')">已知最大心率</button>
+                <button class="toggle-btn" onclick="switchMode('age')">通过年龄计算</button>
+            </div>
+            
+            <div id="known-mode" class="input-mode active">
+                <div class="input-group">
+                    <label for="rhr-known">
+                        静息心率 (bpm)
+                        <span class="info-icon">
+                            i
+                            <span class="tooltip">早晨刚起床，还未下床前测量的心率。这是你最放松状态下的基础心率。</span>
+                        </span>
+                    </label>
+                    <input type="number" id="rhr-known" placeholder="例如: 58" min="30" max="100">
+                </div>
+                <div class="input-group">
+                    <label for="mhr-known">最大心率 (bpm)</label>
+                    <input type="number" id="mhr-known" placeholder="例如: 174" min="100" max="220">
+                </div>
+            </div>
+            
+            <div id="age-mode" class="input-mode">
+                <div class="input-group">
+                    <label for="rhr-age">
+                        静息心率 (bpm)
+                        <span class="info-icon">
+                            i
+                            <span class="tooltip">早晨刚起床，还未下床前测量的心率。这是你最放松状态下的基础心率。</span>
+                        </span>
+                    </label>
+                    <input type="number" id="rhr-age" placeholder="例如: 58" min="30" max="100">
+                </div>
+                <div class="input-group">
+                    <label for="age">年龄 (岁)</label>
+                    <input type="number" id="age" placeholder="例如: 30" min="15" max="100">
+                </div>
+            </div>
+            
+            <div class="error" id="error-message"></div>
+            
+            <div class="button-group">
+                <button class="calculate-btn" onclick="calculate()">计算</button>
+                <button class="reset-btn" onclick="reset()">重置</button>
+            </div>
+        </div>
+        
+        <div id="result-section" class="result-section">
+            <div class="stats-box">
+                <div class="stat-item">
+                    <div class="stat-label">静息心率</div>
+                    <div class="stat-value" id="result-rhr">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">最大心率</div>
+                    <div class="stat-value" id="result-mhr">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">储备心率</div>
+                    <div class="stat-value" id="result-hrr">-</div>
+                </div>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>强度</th>
+                        <th>负荷</th>
+                        <th>储备心率范围</th>
+                        <th>心率范围 (bpm)</th>
+                        <th>供能</th>
+                    </tr>
+                </thead>
+                <tbody id="result-table"></tbody>
+            </table>
+            
+            <div class="note">
+                <strong>📌 计算公式：</strong><br>
+                • 储备心率 = 最大心率 - 静息心率<br>
+                • 最大心率（年龄法）= 208 - 0.7 × 年龄<br>
+                • 心率范围 = 储备心率 × 强度范围% + 静息心率<br>
+                例如轻松跑 59%~74%：下限 = 116 × 59% + 58 = 126 bpm，上限 = 116 × 74% + 58 = 144 bpm
+            </div>
+        </div>
+        
+        <div class="source">
+            来源: Daniels, J. (2013). Daniels' running formula. Human Kinetics.
+        </div>
+    </div>
+    
+    <script>
+        function switchMode(mode) {
+            const buttons = document.querySelectorAll('.toggle-btn');
+            const modes = document.querySelectorAll('.input-mode');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            modes.forEach(m => m.classList.remove('active'));
+            
+            if (mode === 'known') {
+                buttons[0].classList.add('active');
+                document.getElementById('known-mode').classList.add('active');
+            } else {
+                buttons[1].classList.add('active');
+                document.getElementById('age-mode').classList.add('active');
+            }
+            
+            clearError();
+        }
+        
+        function calculate() {
+            clearError();
+            
+            let rhr, mhr;
+            
+            if (document.getElementById('known-mode').classList.contains('active')) {
+                rhr = parseInt(document.getElementById('rhr-known').value);
+                mhr = parseInt(document.getElementById('mhr-known').value);
+            } else {
+                rhr = parseInt(document.getElementById('rhr-age').value);
+                const age = parseInt(document.getElementById('age').value);
+                
+                if (!age) {
+                    showError('请输入年龄');
+                    return;
+                }
+                
+                mhr = Math.round(208 - (0.7 * age));
+            }
+            
+            if (!rhr || !mhr) {
+                showError('请填写所有必需的字段');
+                return;
+            }
+            
+            if (rhr >= mhr) {
+                showError('静息心率必须小于最大心率');
+                return;
+            }
+            
+            if (rhr < 30 || rhr > 100) {
+                showError('静息心率应在 30-100 bpm 之间');
+                return;
+            }
+            
+            if (mhr < 100 || mhr > 220) {
+                showError('最大心率应在 100-220 bpm 之间');
+                return;
+            }
+            
+            const hrr = mhr - rhr;
+            
+            // 更新统计信息
+            document.getElementById('result-rhr').textContent = rhr;
+            document.getElementById('result-mhr').textContent = mhr;
+            document.getElementById('result-hrr').textContent = hrr;
+            
+            // 计算各区间
+            const zones = [
+                {
+                    name: '轻松跑',
+                    intensity: '轻松',
+                    hrrMin: 0.59, hrrMax: 0.74,
+                    energy: '有氧',
+                    class: 'intensity-light'
+                },
+                {
+                    name: '马拉松配速跑',
+                    intensity: '中等',
+                    hrrMin: 0.74, hrrMax: 0.84,
+                    energy: '有氧为主',
+                    class: 'intensity-moderate'
+                },
+                {
+                    name: '乳酸阈值跑',
+                    intensity: '困难',
+                    hrrMin: 0.84, hrrMax: 0.88,
+                    energy: '混氧',
+                    class: 'intensity-threshold'
+                },
+                {
+                    name: '无氧耐力区间',
+                    intensity: '非常困难',
+                    hrrMin: 0.88, hrrMax: 0.95,
+                    energy: '无氧',
+                    class: 'intensity-hard'
+                },
+                {
+                    name: '冲刺间歇跑',
+                    intensity: '非常困难',
+                    hrrMin: 0.95, hrrMax: 1.00,
+                    energy: '无氧',
+                    class: 'intensity-sprint',
+                    isSpirit: true
+                }
+            ];
+            
+            let tableHTML = '';
+            zones.forEach(zone => {
+                const hrMin = Math.round(hrr * zone.hrrMin + rhr);
+                const hrMax = Math.round(hrr * zone.hrrMax + rhr);
+                const hrrMinPercent = Math.round(zone.hrrMin * 100);
+                const hrrMaxPercent = Math.round(zone.hrrMax * 100);
+                
+                const hrRange = zone.isSpirit ? `>${hrMin}` : `${hrMin}~${hrMax}`;
+                const hrrRange = zone.isSpirit ? `>${hrrMinPercent}%` : `${hrrMinPercent}%~${hrrMaxPercent}%`;
+                
+                tableHTML += `
+                    <tr class="${zone.class}">
+                        <td><strong>${zone.name}</strong></td>
+                        <td>${zone.intensity}</td>
+                        <td>${hrrRange}</td>
+                        <td class="hr-range">${hrRange}</td>
+                        <td>${zone.energy}</td>
+                    </tr>
+                `;
+            });
+            
+            document.getElementById('result-table').innerHTML = tableHTML;
+            document.getElementById('result-section').classList.add('active');
+        }
+        
+        function reset() {
+            document.getElementById('rhr-known').value = '';
+            document.getElementById('mhr-known').value = '';
+            document.getElementById('rhr-age').value = '';
+            document.getElementById('age').value = '';
+            document.getElementById('result-section').classList.remove('active');
+            clearError();
+        }
+        
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.classList.add('active');
+        }
+        
+        function clearError() {
+            const errorEl = document.getElementById('error-message');
+            errorEl.classList.remove('active');
+        }
+        
+        // 回车键计算
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                calculate();
+            }
+        });
+    </script>
+</body>
+</html>
